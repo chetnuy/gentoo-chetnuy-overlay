@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+
+<repositories version="1.0">
+	<repo priority="50" quality="experimental" status="unofficial">
+		<name>gentoo-chetnuy-overlay</name>
+		<description>My custom overlay for Gentoo</description>
+		<homepage>https://github.com/chetnuy/gentoo-chetnuy-overlay</homepage>
+		<owner>
+			<email>nevernew@mail.ru</email>
+		</owner>
+		<source type="git">https://github.com/chetnuy/gentoo-chetnuy-overlay.git</source>
+	</repo>
+</repositories>
