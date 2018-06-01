@@ -4,10 +4,11 @@
 This packages need for archiso on gentoo 
 
 Gentoo install:
+'''
 layman -o https://raw.github.com/chetnuy/gentoo-chetnuy-overlay/master/repositories.xml -f -a gentoo-chetnuy-overlay
 sudo emerge -av squashfs-tools libisoburn dosfstools lynx arch-install-scripts
 sudo echo "Server = http://mirror.yandex.ru/archlinux/$repo/os/$arch > /etc/pacman.d/mirrorlist"
-
+'''
 Setting /etc/pacman.conf file
 uncommited: 
 XferCommand = /usr/bin/wget --passive-ftp -c -O %o %u
