@@ -1,103 +1,90 @@
-# Copyright 2019 Gentoo Authors
+# Copyright 1999-2017 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
+# $Header: $
 
-EAPI=6
+EAPI=5
 
-## git-hosting.eclass:
-GH_RN="github:Thomas-Tsai"
-
-## EXPORT_FUNCTIONS: src_unpack
-inherit git-hosting
-## functions: eautoreconf
 inherit autotools
 
-DESCRIPTION="Partition clone and restore tool similar to partimage"
-HOMEPAGE="http://www.partclone.org/ ${HOMEPAGE}"
+DESCRIPTION="Partition cloning tool"
+HOMEPAGE="http://partclone.org"
+SRC_URI="https://github.com/Thomas-Tsai/partclone/archive/${PV}.tar.gz -> ${P}.tar.gz"
+
 LICENSE="GPL-2"
-
 SLOT="0"
+KEYWORDS="~amd64 ~x86"
+IUSE="btrfs reiserfs reiser4 hfs fat minix ntfs jfs static vmfs xfs f2fs nilfs2"
 
-KEYWORDS="~amd64 ~arm ~arm64"
-IUSE_A=(
-	nls +tui static debug test
-
-	# filesystems
-	btrfs exfat +extfs f2fs +fat jfs minix nilfs2 +ntfs reiser4 reiserfs xfs
-	# ufs # no support on amd64/arm
-	# hfsp # no support on amd64/arm
-	# vmfs # requires vmfs-tools, currently not present in gentoo repos
-)
-
-# deps specified in `<root>/INSTALL`
-CDEPEND_A=(
-	# libblkid, libuuid, ...
-	"sys-apps/util-linux"
-
-	"nls? ( sys-devel/gettext )"
-	"tui? ( sys-libs/ncurses:*[unicode] )"
-
-	"btrfs?	( sys-fs/btrfs-progs )"
-	"exfat?	( sys-fs/fuse-exfat )"
-	"extfs?	( sys-libs/e2fsprogs-libs )"
-	"f2fs?	( sys-fs/f2fs-tools )"
-# 	"hfsp?	( sys-fs/hfsplusutils )"  # see IUSE comment
-	"jfs?	( sys-fs/jfsutils )"
-	"nilfs2?	( >=sys-fs/nilfs-utils-2 )"
-	"ntfs?	( sys-fs/ntfs3g[ntfsprogs] )"
-	"reiser4?	( sys-fs/reiser4progs )"
-	"reiserfs?	( sys-fs/progsreiserfs )"
-# 	"ufs?	( sys-fs/ufsutils )"  # see IUSE comment
-	"xfs?	( sys-fs/xfsprogs )"
-)
-DEPEND_A=( "${CDEPEND_A[@]}"
-	"virtual/pkgconfig"
-)
-RDEPEND_A=( "${CDEPEND_A[@]}" )
-
-REQUIRED_USE=""
-RESTRICT+=""
-
-inherit arrays
+RDEPEND="${common_depends}
+	sys-fs/e2fsprogs
+	btrfs? ( sys-fs/btrfs-progs )
+	fat? ( sys-fs/dosfstools )
+	ntfs? ( sys-fs/ntfs3g )
+	hfs? ( sys-fs/hfsutils )
+	jfs? ( sys-fs/jfsutils )
+	reiserfs? ( sys-fs/progsreiserfs )
+	reiser4? ( sys-fs/reiser4progs )
+	xfs? ( >=sys-fs/xfsprogs-3.1.11-r1 )
+	nilfs2? ( >=sys-fs/nilfs-utils-2.1.5-r1 )
+	f2fs? ( >=sys-libs/e2fsprogs-libs-1.42.13 )
+	static? ( sys-fs/e2fsprogs[static-libs]
+			sys-libs/e2fsprogs-libs[static-libs]
+			sys-fs/xfsprogs[static-libs]
+			sys-libs/ncurses[static-libs]
+			sys-fs/ntfs3g[static-libs]
+		)"
+DEPEND=""
 
 src_prepare() {
-	eapply_user
+	default
 
 	eautoreconf
 }
 
-src_configure() {
-	local econfargs=(
-		$(use_enable nls)
-		$(use_enable tui ncursesw)	# enable TEXT User Interface
-		$(use_enable static)	# enable static linking
-		$(use_enable debug mtrace)	# enable memory tracing
-		$(use_enable test fs-test)	# enable file system clone/restore test
+src_configure()
+{
+	local myconf
 
-		$(use_enable btrfs)		# enable btrfs file system
-		$(use_enable exfat)		# enable EXFAT file system
-		$(use_enable extfs)		# enable ext2/3/4 file system
-		$(use_enable f2fs)		# enable f2fs file system
-		$(use_enable fat)		# enable FAT file system
-# 		$(use_enable hfsp)		# enable HFS plus file system  # see IUSE comment
-		$(use_enable jfs)		# enable jfs file system
-		$(use_enable minix)		# enable minix file system
-		$(use_enable nilfs2)	# enable nilfs2 file system
-		$(use_enable ntfs)		# enable NTFS file system
-		$(use_enable reiser4)	# enable Reiser4 file system
-		$(use_enable reiserfs)	# enable REISERFS 3.6/3.6 file system
-# 		$(use_enable ufs)		# enable UFS(1/2) file system  # see IUSE comment
-# 		$(use_enable vmfs)		# enable vmfs file system  # see IUSE comment
-		$(use_enable xfs)		# enable XFS file system
-	)
+	myconf="${myconf} --enable-extfs --enable-ncursesw --enable-fs-test"
+	use xfs && myconf="${myconf} --enable-xfs"
+	use reiserfs && myconf="${myconf} --enable-reiserfs"
+	use reiser4 && myconf="${myconf} --enable-reiser4"
+	use hfs && myconf="${myconf} --enable-hfsp"
+	use fat && myconf="${myconf} --enable-fat --enable-exfat"
+	use ntfs && myconf="${myconf} --enable-ntfs"
+	use minix && myconf="${myconf} --enable-minix"
+	use jfs && myconf="${myconf} --enable-jfs"
+	use btrfs && myconf="${myconf} --enable-btrfs"
+	use vmfs && myconf="${myconf} --enable-vmfs"
+	use f2fs && myconf="${myconf} --enable-f2fs"
+	use nilfs2 && myconf="${myconf} --enable-nilfs2"
+	use static && myconf="${myconf} --enable-static"
 
-	use ntfs && einfo "Please ignore ntfsprogs warnings, they're false positives"
-	use tui && einfo "Please ignore tinfo warnings, they're false positives"
-
-	econf "${econfargs[@]}"
+	econf ${myconf} || die "econf failed"
 }
 
-DOCS=(
-	README.md NEWS AUTHORS
-	# dumb git log
-# 	ChangeLog
-)
+src_install()
+{
+	#emake install || die "make install failed"
+	#emake DIST_ROOT="${D}" install || die "make install failed"
+	cd ${S}/src
+	dosbin partclone.dd partclone.restore partclone.chkimg partclone.info partclone.imager
+	dosbin partclone.extfs
+	dosym /usr/sbin/partclone.extfs /usr/sbin/partclone.ext4
+	dosym /usr/sbin/partclone.extfs /usr/sbin/partclone.ext4dev
+	use xfs && dosbin partclone.xfs
+	use reiserfs && dosbin partclone.reiserfs
+	use reiser4 && dosbin partclone.reiser4
+	use hfs && dosbin partclone.hfsp
+	use fat && (dosbin partclone.fat
+				dosym /usr/sbin/partclone.fat /usr/sbin/partclone.fat12
+				dosym /usr/sbin/partclone.fat /usr/sbin/partclone.fat16
+				dosym /usr/sbin/partclone.fat /usr/sbin/partclone.fat32)
+	use ntfs && dosbin partclone.ntfs
+	use ntfs && (dosbin partclone.ntfsfixboot
+				 dosym /usr/sbin/partclone.ntfsfixboot /usr/sbin/partclone.ntfsreloc)
+	use btrfs && dosbin partclone.btrfs
+	use f2fs && dosbin partclone.f2fs
+	use nilfs2 && dosbin partclone.nilfs2
+}
+
